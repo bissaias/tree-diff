@@ -1,6 +1,8 @@
 package org.web4thejob.diff;
 
 import org.apache.commons.io.FileUtils;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.junit.Test;
 
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.LinkedList;
 import java.util.Map;
+import java.util.StringTokenizer;
 
 /**
  * @author Veniamin Isaias
@@ -68,5 +71,44 @@ public class TreeDiffTest {
         }
         return html.toString();
     }
+
+    @Test
+    public void renderTest() {
+
+        Document doc = Jsoup.parseBodyFragment("");
+
+        Element parent = doc.body();
+
+        populate(parent, "p_0>span_0");
+        populate(parent, "p_0>span_1");
+        populate(parent, "p_0>span_0>span_0");
+        populate(parent, "p_1>span_0");
+
+
+        System.out.println(doc.outerHtml());
+
+    }
+
+    private void populate(Element parent, String path) {
+
+        StringTokenizer tokens = new StringTokenizer(path, "_>");
+        while (tokens.hasMoreTokens()) {
+            String tag = tokens.nextToken();
+            int index = Integer.valueOf(tokens.nextToken());
+
+            Element child = null;
+            if (parent.children().size() > index) {
+                child = parent.children().get(index);
+            }
+
+            if (child == null) {
+                child = parent.appendElement(tag);
+            }
+            parent = child;
+
+        }
+
+    }
+
 
 }
