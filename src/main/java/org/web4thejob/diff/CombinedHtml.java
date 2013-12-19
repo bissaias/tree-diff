@@ -13,26 +13,37 @@ public class CombinedHtml {
 
     public void addNewElement(Element element) {
         String key = buildKey(element);
+        String id = getDiffId(key);
+        element.attr("diffid", id);
         Combination combination = combinedTags.get(key);
         if (combination == null) {
-            combination = combinedTags.put(key, new Combination(key));
+            combination = new Combination(key);
+            combinedTags.put(key, combination);
         }
         combination.setNewElement(element);
     }
 
     public void addOldElement(Element element) {
         String key = buildKey(element);
+        String id = getDiffId(key);
+        element.attr("diffid", id);
         Combination combination = combinedTags.get(key);
         if (combination == null) {
-            combination = combinedTags.put(key, new Combination(key));
+            combination = new Combination(key);
+            combinedTags.put(key, combination);
         }
         combination.setOldElement(element);
+    }
+
+    private String getDiffId(String key) {
+        String[] tokens = key.split(">");
+        return tokens[tokens.length - 1];
     }
 
     private String buildKey(Element e) {
         String key = String.format("%05d", e.elementSiblingIndex()) + "_" + e.tagName();
         Element parent = e.parent();
-        while (parent != null) {
+        while (parent != null && !parent.tagName().equals("body")) {
             key = String.format("%05d", parent.elementSiblingIndex()) + "_" + parent.tagName() + ">" + key;
             parent = parent.parent();
         }
@@ -69,7 +80,7 @@ public class CombinedHtml {
 
         public void setOldElement(Element oldElement) {
             this.oldElement = oldElement.clone();
-            this.oldElement.children().clear();
+            clearChildren(this.oldElement);
         }
 
         public Element getNewElement() {
@@ -78,9 +89,44 @@ public class CombinedHtml {
 
         public void setNewElement(Element newElement) {
             this.newElement = newElement.clone();
-            this.newElement.children().clear();
+            clearChildren(this.newElement);
         }
 
+        public boolean equals() {
+            return equalTag() && equalText();
+        }
 
+        public boolean equalText() {
+            String oldText = "";
+            if (oldElement != null && oldElement.hasText()) {
+                oldText = oldElement.ownText();
+            }
+
+            String newText = "";
+            if (newElement != null && newElement.hasText()) {
+                newText = newElement.ownText();
+            }
+            return newText.equals(oldText);
+        }
+
+        public boolean equalTag() {
+            String oldTag = "";
+            if (oldElement != null) {
+                oldTag = oldElement.tagName();
+            }
+
+            String newTag = "";
+            if (newElement != null) {
+                newTag = newElement.tagName();
+            }
+            return newTag.equals(oldTag);
+        }
+
+        private void clearChildren(Element e) {
+            while (e.children().size() > 0) {
+                e.child(0).remove();
+            }
+        }
     }
+
 }

@@ -111,4 +111,18 @@ public class TreeDiffTest {
     }
 
 
+    @Test
+    public void doHtmlDiff() throws IOException {
+        HtmlDiff htmlDiff = new HtmlDiff();
+
+        File current = new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/current.html");
+
+        File previous = new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/previous.html");
+
+
+        FileUtils.writeStringToFile(new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/result.html"), htmlDiff.buildDiff(current, previous).outerHtml(),
+                Charset.forName("UTF-8"));
+
+    }
+
 }
