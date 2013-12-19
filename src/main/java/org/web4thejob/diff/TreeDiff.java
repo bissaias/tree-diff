@@ -25,9 +25,7 @@ public class TreeDiff {
 
 
         thisNodes = new ArrayList<>();
-        String thisHtml = FileUtils.readFileToString(thisFile);
-        Document thisDoc = Jsoup.parseBodyFragment(thisHtml);
-
+        Document thisDoc = Jsoup.parseBodyFragment(FileUtils.readFileToString(thisFile));
         for (Element e : thisDoc.body().children()) {
             thisNodes.add(new ElementWrapper(e));
 
@@ -35,59 +33,13 @@ public class TreeDiff {
         }
 
         thatNodes = new ArrayList<>();
-        String thatHtml = FileUtils.readFileToString(thatFile);
-        Document thatDoc = Jsoup.parseBodyFragment(thatHtml);
-
+        Document thatDoc = Jsoup.parseBodyFragment(FileUtils.readFileToString(thatFile));
         for (Element e : thatDoc.body().children()) {
             thatNodes.add(new ElementWrapper(e));
 
             traverseDocument(e, thatNodes);
         }
 
-/*
-        List<ElementWrapper> finalNodes = new ArrayList<>();
-        for (int i = 0; i < java.lang.Math.max(thisNodes.size(), thatNodes.size()); i++) {
-            ElementWrapper thisNode = null;
-            ElementWrapper thatNode = null;
-
-            if (i < thisNodes.size()) {
-                thisNode = thisNodes.get(i);
-            } else {
-                thisNodes = null;
-            }
-
-            if (i < thatNodes.size()) {
-                thatNode = thatNodes.get(i);
-            } else {
-                thatNode = null;
-            }
-
-
-            if (thatNode == null) {
-                thisNode.status = ElementStatus.INSERTED;
-                finalNodes.add(thisNode);
-            } else if (thisNode == null) {
-                thatNode.status = ElementStatus.DELETED;
-                finalNodes.add(thatNode);
-            } else {
-                if (thisNode.Id.equals(thatNode.Id)) {
-                    thisNode.status = ElementStatus.MATCHED;
-                    thisNode.against = thatNode.element;
-                    finalNodes.add(thisNode);
-                } else {
-                    thatNode.status = ElementStatus.DELETED;
-                    finalNodes.add(thatNode);
-                    thisNode.status = ElementStatus.INSERTED;
-                    finalNodes.add(thisNode);
-                }
-            }
-        }
-
-
-        for (ElementWrapper ew : finalNodes) {
-            System.out.println(ew.status + " " + ew.Id);
-        }
-*/
         Map<String, ElementWrapper> elementWrappers = new HashMap<>();
 
         StringBuilder thisString = new StringBuilder();
