@@ -1,6 +1,7 @@
 package org.web4thejob.diff;
 
-import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
 
 import java.util.*;
 
@@ -11,7 +12,7 @@ import java.util.*;
 public class CombinedHtml {
     private Map<String, Combination> combinedTags = new HashMap<>();
 
-    public void addNewElement(Element element) {
+    public void addNewElement(Node element) {
         String key = buildKey(element);
         String id = getDiffId(key);
         element.attr("diffid", id);
@@ -23,7 +24,7 @@ public class CombinedHtml {
         combination.setNewElement(element);
     }
 
-    public void addOldElement(Element element) {
+    public void addOldElement(Node element) {
         String key = buildKey(element);
         String id = getDiffId(key);
         element.attr("diffid", id);
@@ -40,11 +41,11 @@ public class CombinedHtml {
         return tokens[tokens.length - 1];
     }
 
-    private String buildKey(Element e) {
-        String key = String.format("%05d", e.elementSiblingIndex()) + "_" + e.tagName();
-        Element parent = e.parent();
-        while (parent != null && !parent.tagName().equals("body")) {
-            key = String.format("%05d", parent.elementSiblingIndex()) + "_" + parent.tagName() + ">" + key;
+    private String buildKey(Node e) {
+        String key = String.format("%05d", e.siblingIndex()) + "_" + e.nodeName();
+        Node parent = e.parent();
+        while (parent != null && !parent.nodeName().equals("body")) {
+            key = String.format("%05d", parent.siblingIndex()) + "_" + parent.nodeName() + ">" + key;
             parent = parent.parent();
         }
 
@@ -63,8 +64,8 @@ public class CombinedHtml {
 
     public class Combination {
         private String key;
-        private Element newElement;
-        private Element oldElement;
+        private Node newElement;
+        private Node oldElement;
 
         public Combination(String key) {
             this.key = key;
@@ -74,20 +75,20 @@ public class CombinedHtml {
             return key;
         }
 
-        public Element getOldElement() {
+        public Node getOldElement() {
             return oldElement;
         }
 
-        public void setOldElement(Element oldElement) {
+        public void setOldElement(Node oldElement) {
             this.oldElement = oldElement.clone();
             clearChildren(this.oldElement);
         }
 
-        public Element getNewElement() {
+        public Node getNewElement() {
             return newElement;
         }
 
-        public void setNewElement(Element newElement) {
+        public void setNewElement(Node newElement) {
             this.newElement = newElement.clone();
             clearChildren(this.newElement);
         }
@@ -98,13 +99,13 @@ public class CombinedHtml {
 
         public boolean equalText() {
             String oldText = "";
-            if (oldElement != null && oldElement.hasText()) {
-                oldText = oldElement.ownText();
+            if (oldElement instanceof TextNode) {
+                oldText = ((TextNode) oldElement).text();
             }
 
             String newText = "";
-            if (newElement != null && newElement.hasText()) {
-                newText = newElement.ownText();
+            if (newElement instanceof TextNode) {
+                newText = ((TextNode) newElement).text();
             }
             return newText.equals(oldText);
         }
@@ -112,19 +113,19 @@ public class CombinedHtml {
         public boolean equalTag() {
             String oldTag = "";
             if (oldElement != null) {
-                oldTag = oldElement.tagName();
+                oldTag = oldElement.nodeName();
             }
 
             String newTag = "";
             if (newElement != null) {
-                newTag = newElement.tagName();
+                newTag = newElement.nodeName();
             }
             return newTag.equals(oldTag);
         }
 
-        private void clearChildren(Element e) {
-            while (e.children().size() > 0) {
-                e.child(0).remove();
+        private void clearChildren(Node e) {
+            while (e.childNodeSize() > 0) {
+                e.childNode(0).remove();
             }
         }
     }
