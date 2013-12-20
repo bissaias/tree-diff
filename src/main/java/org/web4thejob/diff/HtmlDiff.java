@@ -18,8 +18,8 @@ import java.util.StringTokenizer;
  * @since 1.0.0
  */
 public class HtmlDiff {
-    private static final String DIV_INSERTED = "<div style=\"background:#e6ffe6;\"><ins></ins></div>";
-    private static final String DIV_DELETED = "<div style=\"background:#ffe6e6;\"><del></del></div>";
+    private static final String DIV_INSERTED = "<ins style=\"background:#e6ffe6;\"><ins>";
+    private static final String DIV_DELETED = "<del style=\"background:#ffe6e6;\"><del>";
     private CombinedHtml combinedHtml = new CombinedHtml();
 
     private static Element copyAll(Element src, Element trg) {
@@ -46,14 +46,14 @@ public class HtmlDiff {
 
         doc = Jsoup.parseBodyFragment(FileUtils.readFileToString(oldFile));
         for (Element e : doc.body().children()) {
-            combinedHtml.addNewElement(e);
-            traverseDocument(e);
+            combinedHtml.addOldElement(e);
+            traverseOldDocument(e);
         }
 
         doc = Jsoup.parseBodyFragment(FileUtils.readFileToString(newFile));
         for (Element e : doc.body().children()) {
-            combinedHtml.addOldElement(e);
-            traverseDocument(e);
+            combinedHtml.addNewElement(e);
+            traverseNewDocument(e);
         }
 
         List<Element> inserted = new ArrayList<>();
@@ -146,10 +146,17 @@ public class HtmlDiff {
         return child;
     }
 
-    private void traverseDocument(Element parent) {
+    private void traverseNewDocument(Element parent) {
         for (Element e : parent.children()) {
             combinedHtml.addNewElement(e);
-            traverseDocument(e);
+            traverseNewDocument(e);
+        }
+    }
+
+    private void traverseOldDocument(Element parent) {
+        for (Element e : parent.children()) {
+            combinedHtml.addOldElement(e);
+            traverseOldDocument(e);
         }
     }
 

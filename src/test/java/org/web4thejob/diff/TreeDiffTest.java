@@ -115,12 +115,15 @@ public class TreeDiffTest {
     public void doHtmlDiff() throws IOException {
         HtmlDiff htmlDiff = new HtmlDiff();
 
-        File current = new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/current.html");
+        File current = new File("C:\\Documents and Settings\\e36132\\IdeaProjects\\tree-diff\\src\\test\\resources" +
+                "\\set1\\current.html");
 
-        File previous = new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/previous.html");
+        File previous = new File("C:\\Documents and Settings\\e36132\\IdeaProjects\\tree-diff\\src\\test\\resources" +
+                "\\set1\\previous.html");
 
 
-        FileUtils.writeStringToFile(new File("/Users/benji/Documents/tree-diff/src/test/resources/set1/result.html"), htmlDiff.buildDiff(current, previous).outerHtml(),
+        FileUtils.writeStringToFile(new File("C:\\Documents and Settings\\e36132\\IdeaProjects\\tree-diff\\src\\test" +
+                "\\resources\\set1\\result.html"), htmlDiff.buildDiff(current, previous).outerHtml(),
                 Charset.forName("UTF-8"));
 
     }
