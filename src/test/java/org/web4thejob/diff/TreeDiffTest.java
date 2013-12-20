@@ -123,7 +123,7 @@ public class TreeDiffTest {
 
 
         FileUtils.writeStringToFile(new File("C:\\Documents and Settings\\e36132\\IdeaProjects\\tree-diff\\src\\test" +
-                "\\resources\\set1\\result.html"), htmlDiff.buildDiff(current, previous).outerHtml(),
+                "\\resources\\set1\\result.html"), htmlDiff.buildDiff(previous, current).outerHtml(),
                 Charset.forName("UTF-8"));
 
     }

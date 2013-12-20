@@ -2,9 +2,9 @@ package org.web4thejob.diff;
 
 import org.apache.commons.io.FileUtils;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Attribute;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
+import org.jsoup.nodes.*;
+import org.jsoup.parser.Parser;
+import org.jsoup.parser.Tag;
 
 import java.io.File;
 import java.io.IOException;
@@ -22,30 +22,12 @@ public class HtmlDiff {
     private static final String DIV_DELETED = "<del style=\"background:#ffe6e6;\"><del>";
     private CombinedHtml combinedHtml = new CombinedHtml();
 
-    private static Element copyAll(Element src, Element trg) {
-        trg.tagName(src.tagName());
-        copyAttributes(src, trg);
-        copyText(src, trg);
-        return trg;
-    }
-
-    private static Element copyAttributes(Element src, Element trg) {
-        for (Attribute a : src.attributes()) {
-            trg.attr(a.getKey(), a.getValue());
-        }
-        return trg;
-    }
-
-    private static Element copyText(Element src, Element trg) {
-        trg.text(src.ownText());
-        return trg;
-    }
 
     public Document buildDiff(File oldFile, File newFile) throws IOException {
         Document doc;
 
         doc = Jsoup.parseBodyFragment(FileUtils.readFileToString(oldFile));
-        for (Element e : doc.body().children()) {
+        for (Node e : doc.body().childNodes()) {
             combinedHtml.addOldElement(e);
             traverseOldDocument(e);
         }
@@ -56,17 +38,17 @@ public class HtmlDiff {
             traverseNewDocument(e);
         }
 
-        List<Element> inserted = new ArrayList<>();
-        List<Element> deleted = new ArrayList<>();
+        List<Node> inserted = new ArrayList<>();
+        List<Node> deleted = new ArrayList<>();
 
 
         doc = Jsoup.parseBodyFragment("");
         doc.head().appendElement("meta").attr("charset", "utf-8");
         for (String key : combinedHtml.getKeys()) {
-            Element finalElement = playBack(key, doc.body());
+            Node finalElement = playBack(key, doc.body());
             CombinedHtml.Combination combination = combinedHtml.get(key);
-            Element oldElement = combination.getOldElement();
-            Element newElement = combination.getNewElement();
+            Node oldElement = combination.getOldElement();
+            Node newElement = combination.getNewElement();
 
             if (newElement == null) {
                 deleted.add(copyAll(oldElement, finalElement));//.wrap(DELETED_SPAN);
@@ -77,8 +59,8 @@ public class HtmlDiff {
                     copyAll(newElement, finalElement);
                 } else if (combination.equalTag() && !combination.equalText()) {
                     copyAttributes(newElement, finalElement);
-                    String oldText = oldElement.ownText();
-                    String newText = newElement.ownText();
+                    String oldText = ((TextNode) oldElement).text();
+                    String newText = ((TextNode) newElement).text();
 
                     DiffMatchPatch diffMatchPatch = new DiffMatchPatch();
                     LinkedList<DiffMatchPatch.Diff> diffs = diffMatchPatch.diff_main(oldText, newText);
@@ -102,7 +84,12 @@ public class HtmlDiff {
                         }
                     }
 
-                    finalElement.append(html.toString());
+                    Element parent = (Element) finalElement.parent();
+                    finalElement.remove();
+                    for (Node in : Parser.parseBodyFragment(html.toString(), "").body().childNodes()) {
+                        parent.appendChild(in.clone());
+                    }
+
 
                 } else {
                     deleted.add(copyAll(oldElement, finalElement));//.wrap(DELETED_SPAN);
@@ -112,18 +99,18 @@ public class HtmlDiff {
 
         }
 
-        for (Element e : inserted) {
+        for (Node e : inserted) {
             e.wrap(DIV_INSERTED);
         }
-        for (Element e : deleted) {
+        for (Node e : deleted) {
             e.wrap(DIV_DELETED);
         }
 
         return doc;
     }
 
-    private Element playBack(String key, Element parent) {
-        Element child = null;
+    private Node playBack(String key, Node parent) {
+        Node child = null;
         StringTokenizer tokens = new StringTokenizer(key, "_>");
         while (tokens.hasMoreTokens()) {
             String index = tokens.nextToken();
@@ -131,14 +118,26 @@ public class HtmlDiff {
             String id = index + "_" + tag;
             child = null;
 
-            child = parent.getElementsByAttributeValue("diffid", id).first();
-            if (child != null && !child.parent().equals(parent)) {
-                child = null;
+            for (Node tmp : parent.childNodes()) {
+                if (id.equals(tmp.attr("diffid"))) {
+                    child = tmp;
+                    break;
+                }
             }
 
             if (child == null) {
-                child = parent.appendElement(tag);
+                switch (tag) {
+                    case "#text":
+                        child = new TextNode("", "");
+                        break;
+                    default:
+                        child = new Element(Tag.valueOf(tag), "");
+                        break;
+                }
+
                 child.attr("diffid", id);
+                ((Element) parent).appendChild(child);
+
             }
             parent = child;
         }
@@ -146,18 +145,38 @@ public class HtmlDiff {
         return child;
     }
 
-    private void traverseNewDocument(Element parent) {
-        for (Element e : parent.children()) {
+    private void traverseNewDocument(Node parent) {
+        for (Node e : parent.childNodes()) {
             combinedHtml.addNewElement(e);
             traverseNewDocument(e);
         }
     }
 
-    private void traverseOldDocument(Element parent) {
-        for (Element e : parent.children()) {
+    private void traverseOldDocument(Node parent) {
+        for (Node e : parent.childNodes()) {
             combinedHtml.addOldElement(e);
             traverseOldDocument(e);
         }
+    }
+
+    private static Node copyAll(Node src, Node trg) {
+        copyAttributes(src, trg);
+        copyText(src, trg);
+        return trg;
+    }
+
+    private static Node copyAttributes(Node src, Node trg) {
+        for (Attribute a : src.attributes()) {
+            trg.attr(a.getKey(), a.getValue());
+        }
+        return trg;
+    }
+
+    private static Node copyText(Node src, Node trg) {
+        if (src instanceof TextNode) {
+            ((TextNode) trg).text(((TextNode) src).text());
+        }
+        return trg;
     }
 
 }
